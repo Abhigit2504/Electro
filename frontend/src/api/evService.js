@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:8000/api";  // change if backend runs elsewhere
+const API_URL = "https://electro-b.vercel.app/api";  // change if backend runs elsewhere
 
 export const getEVs = async () => {
   const res = await axios.get(`${API_URL}/evs/`);
