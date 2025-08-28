@@ -6,57 +6,68 @@ const parse = require("csv-parse/lib/sync"); // CSV parser
 
 const app = express();
 
-// 🔹 CORS setup for localhost + frontend
+// ✅ Enable CORS for localhost and your frontend
 app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://electro-khaki.vercel.app" // your frontend domain
+    "https://electro-khaki.vercel.app"
   ]
 }));
 
-// 🔹 CSV file URL
+// Handle OPTIONS preflight requests
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // temporary for testing
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
+
+// CSV URL
 const CSV_URL = "https://raw.githubusercontent.com/vedant-patil-mapup/analytics-dashboard-assessment/main/data-to-visualize/Electric_Vehicle_Population_Data.csv";
 
 let evData = [];
 
-// 🔹 Load CSV safely
+// 🔹 Load CSV data
 async function loadCSV() {
   try {
     const response = await axios.get(CSV_URL, { responseType: "text" });
-    const csvText = response.data;
+    const records = parse(response.data, {
+      columns: true,
+      skip_empty_lines: true
+    });
 
-    // parse CSV
-    const records = parse(csvText, { columns: true, skip_empty_lines: true });
-
-    // map to JSON
     evData = records.map((r, index) => ({
       id: index + 1,
       model: r["Model"] || "Unknown",
       range: Number(r["Electric Range"]) || 0,
       utility: r["Electric Utility"] || "Unknown",
       cafv: r["Clean Alternative Fuel Vehicle (CAFV) Eligibility"] || "Unknown",
-      year: Number(r["Model Year"]) || 0,
+      year: Number(r["Model Year"]) || 0
     }));
 
     console.log(`✅ Loaded ${evData.length} EV records`);
   } catch (err) {
-    console.error("❌ CSV load failed:", err.message);
-    evData = []; // prevent server crash
+    console.error("❌ Error loading CSV:", err.message);
   }
 }
 
-// 🔹 API routes
+// 🔹 API Routes
+
+// Get all EVs
 app.get("/api/evs", (req, res) => {
   res.json(evData);
 });
 
+// Get EV by ID
 app.get("/api/evs/:id", (req, res) => {
   const ev = evData.find(e => e.id === parseInt(req.params.id));
   if (!ev) return res.status(404).json({ error: "EV not found" });
   res.json(ev);
 });
 
+// Get stats
 app.get("/api/stats", (req, res) => {
   const total = evData.length;
 
