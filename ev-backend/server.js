@@ -6,7 +6,7 @@ const { Readable } = require("stream");
 
 const app = express();
 app.use(cors({
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000", "https://your-frontend.vercel.app"]
+  origin: [ "https://your-frontend.vercel.app"]
 }));
 
 // CSV file URL
