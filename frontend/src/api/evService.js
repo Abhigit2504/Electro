@@ -1,18 +1,18 @@
 import axios from "axios";
 
-const API_URL = "https://electro-b.vercel.app/api";  
+const API_URL = "https://electro-b.vercel.app/api";  // change if backend runs elsewhere
 
 export const getEVs = async () => {
-  const res = await axios.get(`${API_URL}/evs`);   // ✅ no slash
+  const res = await axios.get(`${API_URL}/evs/`);
   return res.data;
 };
 
 export const getEVById = async (id) => {
-  const res = await axios.get(`${API_URL}/evs/${id}`);  // ✅ no slash
+  const res = await axios.get(`${API_URL}/evs/${id}/`);
   return res.data;
 };
 
 export const getStats = async () => {
-  const res = await axios.get(`${API_URL}/stats`);  // ✅ no slash
+  const res = await axios.get(`${API_URL}/stats/`);
   return res.data;
 };
