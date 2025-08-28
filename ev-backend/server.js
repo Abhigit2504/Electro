@@ -5,9 +5,8 @@ const cors = require("cors");
 const { Readable } = require("stream");
 
 const app = express();
-app.use(cors({
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000", "https://electro-khaki.vercel.app/"]
-}));
+app.use(cors());
+
 
 // CSV file URL
 const CSV_URL =
