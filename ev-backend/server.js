@@ -1,34 +1,34 @@
+// backend.js
 const express = require("express");
 const axios = require("axios");
 const csv = require("csv-parser");
 const cors = require("cors");
-const { Readable } = require("stream");
 
 const app = express();
+
+// 🔹 Enable CORS for frontend
 app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://electro-khaki.vercel.app"   // ✅ add this
+    "https://electro-khaki.vercel.app"   // ✅ frontend domain
   ]
 }));
 
-
-// CSV file URL
+// 🔹 CSV file URL
 const CSV_URL =
   "https://raw.githubusercontent.com/vedant-patil-mapup/analytics-dashboard-assessment/main/data-to-visualize/Electric_Vehicle_Population_Data.csv";
 
 let evData = [];
 
-// 🔹 Load CSV Data
+// 🔹 Load CSV Data (fixed streaming)
 async function loadCSV() {
   try {
-    const response = await axios.get(CSV_URL);
+    const response = await axios.get(CSV_URL, { responseType: "stream" }); // ✅ stream
     const rows = [];
-    const stream = Readable.from(response.data);
 
     await new Promise((resolve, reject) => {
-      stream
+      response.data
         .pipe(csv())
         .on("data", (row) => rows.push(row))
         .on("end", () => {
@@ -43,7 +43,10 @@ async function loadCSV() {
           console.log(`✅ Loaded ${evData.length} EV records`);
           resolve();
         })
-        .on("error", reject);
+        .on("error", (err) => {
+          console.error("❌ CSV parsing error:", err);
+          reject(err);
+        });
     });
   } catch (err) {
     console.error("❌ Error loading CSV:", err.message);
@@ -69,20 +72,14 @@ app.get("/api/stats", (req, res) => {
   evData.forEach((e) => {
     cafvMap[e.cafv] = (cafvMap[e.cafv] || 0) + 1;
   });
-  const cafvBreakdown = Object.entries(cafvMap).map(([type, count]) => ({
-    type,
-    count,
-  }));
+  const cafvBreakdown = Object.entries(cafvMap).map(([type, count]) => ({ type, count }));
 
   // Utility Breakdown
   const utilityMap = {};
   evData.forEach((e) => {
     utilityMap[e.utility] = (utilityMap[e.utility] || 0) + 1;
   });
-  const utilityBreakdown = Object.entries(utilityMap).map(([utility, count]) => ({
-    utility,
-    count,
-  }));
+  const utilityBreakdown = Object.entries(utilityMap).map(([utility, count]) => ({ utility, count }));
 
   // Range Distribution
   const buckets = { "0-50": 0, "51-100": 0, "101-200": 0, "200+": 0 };
@@ -92,10 +89,7 @@ app.get("/api/stats", (req, res) => {
     else if (e.range <= 200) buckets["101-200"]++;
     else buckets["200+"]++;
   });
-  const rangeDistribution = Object.entries(buckets).map(([range, value]) => ({
-    range,
-    value,
-  }));
+  const rangeDistribution = Object.entries(buckets).map(([range, value]) => ({ range, value }));
 
   // Yearly Adoption
   const yearMap = {};
@@ -116,8 +110,8 @@ app.get("/api/stats", (req, res) => {
   });
 });
 
-// 🔹 Start Server
-const PORT = 8000;
+// 🔹 Start server
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, async () => {
   await loadCSV();
   console.log(`🚀 Backend running at http://localhost:${PORT}`);
