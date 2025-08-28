@@ -1,0 +1,22 @@
+{
+  "name": "ev-dashboard",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhigit2504/Electro.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Abhigit2504/Electro/issues"
+  },
+  "homepage": "https://github.com/Abhigit2504/Electro#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
