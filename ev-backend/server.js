@@ -2,34 +2,34 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const parse = require("csv-parse/lib/sync"); // sync CSV parser
+const parse = require("csv-parse/lib/sync"); // CSV parser
 
 const app = express();
 
-// ✅ CORS setup for your frontend
+// 🔹 CORS setup for localhost + frontend
 app.use(cors({
   origin: [
-    "http://localhost:3000",                 // local dev
-    "https://electro-khaki.vercel.app"      // frontend deployed
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://electro-khaki.vercel.app" // your frontend domain
   ]
 }));
 
-// CSV file URL
+// 🔹 CSV file URL
 const CSV_URL = "https://raw.githubusercontent.com/vedant-patil-mapup/analytics-dashboard-assessment/main/data-to-visualize/Electric_Vehicle_Population_Data.csv";
 
 let evData = [];
 
-// 🔹 Load CSV Data from GitHub
+// 🔹 Load CSV safely
 async function loadCSV() {
   try {
     const response = await axios.get(CSV_URL, { responseType: "text" });
     const csvText = response.data;
 
-    const records = parse(csvText, {
-      columns: true,
-      skip_empty_lines: true
-    });
+    // parse CSV
+    const records = parse(csvText, { columns: true, skip_empty_lines: true });
 
+    // map to JSON
     evData = records.map((r, index) => ({
       id: index + 1,
       model: r["Model"] || "Unknown",
@@ -41,12 +41,15 @@ async function loadCSV() {
 
     console.log(`✅ Loaded ${evData.length} EV records`);
   } catch (err) {
-    console.error("❌ Error loading CSV:", err.message);
+    console.error("❌ CSV load failed:", err.message);
+    evData = []; // prevent server crash
   }
 }
 
-// 🔹 API Routes
-app.get("/api/evs", (req, res) => res.json(evData));
+// 🔹 API routes
+app.get("/api/evs", (req, res) => {
+  res.json(evData);
+});
 
 app.get("/api/evs/:id", (req, res) => {
   const ev = evData.find(e => e.id === parseInt(req.params.id));
