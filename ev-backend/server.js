@@ -2,11 +2,11 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const parse = require("csv-parse/lib/sync");
+const parse = require("csv-parse/lib/sync"); // synchronous CSV parser
 
 const app = express();
 
-// 🔹 Enable CORS for frontend
+// ✅ CORS setup for frontend
 app.use(cors({
   origin: [
     "http://localhost:3000",
@@ -15,16 +15,18 @@ app.use(cors({
   ]
 }));
 
-// 🔹 CSV file URL
+// CSV file URL
 const CSV_URL = "https://raw.githubusercontent.com/vedant-patil-mapup/analytics-dashboard-assessment/main/data-to-visualize/Electric_Vehicle_Population_Data.csv";
 
 let evData = [];
 
-// 🔹 Load CSV Data (string parsing version)
+// 🔹 Load CSV Data from GitHub
 async function loadCSV() {
   try {
-    const response = await axios.get(CSV_URL);
-    const records = parse(response.data, {
+    const response = await axios.get(CSV_URL, { responseType: "text" }); // force text
+    const csvText = response.data;
+
+    const records = parse(csvText, {
       columns: true,
       skip_empty_lines: true
     });
