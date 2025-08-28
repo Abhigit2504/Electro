@@ -1,4 +1,3 @@
-// backend.js
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
@@ -6,7 +5,7 @@ const parse = require("csv-parse/lib/sync");
 
 const app = express();
 
-// 🔹 Enable CORS for frontend
+// CORS setup
 app.use(cors({
   origin: [
     "http://localhost:3000",
@@ -15,16 +14,19 @@ app.use(cors({
   ]
 }));
 
-// 🔹 CSV file URL
+// CSV URL
 const CSV_URL = "https://raw.githubusercontent.com/vedant-patil-mapup/analytics-dashboard-assessment/main/data-to-visualize/Electric_Vehicle_Population_Data.csv";
 
 let evData = [];
 
-// 🔹 Load CSV Data (string parsing version)
+// Load CSV function
 async function loadCSV() {
   try {
-    const response = await axios.get(CSV_URL);
-    const records = parse(response.data, {
+    // Force Axios to get raw text
+    const response = await axios.get(CSV_URL, { responseType: "text" });
+    const csvText = response.data;
+
+    const records = parse(csvText, {
       columns: true,
       skip_empty_lines: true
     });
@@ -44,7 +46,7 @@ async function loadCSV() {
   }
 }
 
-// 🔹 Routes
+// Routes
 app.get("/api/evs", (req, res) => res.json(evData));
 
 app.get("/api/evs/:id", (req, res) => {
@@ -56,7 +58,6 @@ app.get("/api/evs/:id", (req, res) => {
 app.get("/api/stats", (req, res) => {
   const total = evData.length;
 
-  // CAFV Breakdown
   const cafvBreakdown = Object.values(
     evData.reduce((acc, e) => {
       acc[e.cafv] = acc[e.cafv] || { type: e.cafv, count: 0 };
@@ -65,7 +66,6 @@ app.get("/api/stats", (req, res) => {
     }, {})
   );
 
-  // Utility Breakdown
   const utilityBreakdown = Object.values(
     evData.reduce((acc, e) => {
       acc[e.utility] = acc[e.utility] || { utility: e.utility, count: 0 };
@@ -74,7 +74,6 @@ app.get("/api/stats", (req, res) => {
     }, {})
   );
 
-  // Range Distribution
   const buckets = { "0-50": 0, "51-100": 0, "101-200": 0, "200+": 0 };
   evData.forEach(e => {
     if (e.range <= 50) buckets["0-50"]++;
@@ -84,7 +83,6 @@ app.get("/api/stats", (req, res) => {
   });
   const rangeDistribution = Object.entries(buckets).map(([range, value]) => ({ range, value }));
 
-  // Yearly Adoption
   const yearlyAdoption = Object.entries(
     evData.reduce((acc, e) => {
       if (e.year) acc[e.year] = (acc[e.year] || 0) + 1;
@@ -103,7 +101,7 @@ app.get("/api/stats", (req, res) => {
   });
 });
 
-// 🔹 Start Server
+// Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, async () => {
   await loadCSV();
