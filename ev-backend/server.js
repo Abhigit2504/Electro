@@ -2,16 +2,16 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const parse = require("csv-parse/lib/sync"); // synchronous CSV parser
+const parse = require("csv-parse/lib/sync"); // sync CSV parser
 
 const app = express();
 
-// ✅ CORS setup for frontend
+// ✅ CORS setup for your frontend and localhost
 app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://electro-khaki.vercel.app"
+    "https://electro-khaki.vercel.app" // your frontend
   ]
 }));
 
@@ -23,14 +23,17 @@ let evData = [];
 // 🔹 Load CSV Data from GitHub
 async function loadCSV() {
   try {
-    const response = await axios.get(CSV_URL, { responseType: "text" }); // force text
+    // fetch raw CSV as text
+    const response = await axios.get(CSV_URL, { responseType: "text" });
     const csvText = response.data;
 
+    // parse CSV
     const records = parse(csvText, {
       columns: true,
       skip_empty_lines: true
     });
 
+    // map to JSON
     evData = records.map((r, index) => ({
       id: index + 1,
       model: r["Model"] || "Unknown",
@@ -46,7 +49,7 @@ async function loadCSV() {
   }
 }
 
-// 🔹 Routes
+// 🔹 API Routes
 app.get("/api/evs", (req, res) => res.json(evData));
 
 app.get("/api/evs/:id", (req, res) => {
@@ -58,7 +61,7 @@ app.get("/api/evs/:id", (req, res) => {
 app.get("/api/stats", (req, res) => {
   const total = evData.length;
 
-  // CAFV Breakdown
+  // CAFV breakdown
   const cafvBreakdown = Object.values(
     evData.reduce((acc, e) => {
       acc[e.cafv] = acc[e.cafv] || { type: e.cafv, count: 0 };
@@ -67,7 +70,7 @@ app.get("/api/stats", (req, res) => {
     }, {})
   );
 
-  // Utility Breakdown
+  // Utility breakdown
   const utilityBreakdown = Object.values(
     evData.reduce((acc, e) => {
       acc[e.utility] = acc[e.utility] || { utility: e.utility, count: 0 };
@@ -76,7 +79,7 @@ app.get("/api/stats", (req, res) => {
     }, {})
   );
 
-  // Range Distribution
+  // Range distribution
   const buckets = { "0-50": 0, "51-100": 0, "101-200": 0, "200+": 0 };
   evData.forEach(e => {
     if (e.range <= 50) buckets["0-50"]++;
@@ -86,7 +89,7 @@ app.get("/api/stats", (req, res) => {
   });
   const rangeDistribution = Object.entries(buckets).map(([range, value]) => ({ range, value }));
 
-  // Yearly Adoption
+  // Yearly adoption
   const yearlyAdoption = Object.entries(
     evData.reduce((acc, e) => {
       if (e.year) acc[e.year] = (acc[e.year] || 0) + 1;
@@ -105,7 +108,7 @@ app.get("/api/stats", (req, res) => {
   });
 });
 
-// 🔹 Start Server
+// 🔹 Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, async () => {
   await loadCSV();
