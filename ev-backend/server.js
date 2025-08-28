@@ -6,12 +6,11 @@ const parse = require("csv-parse/lib/sync"); // sync CSV parser
 
 const app = express();
 
-// ✅ CORS setup for your frontend and localhost
+// ✅ CORS setup for your frontend
 app.use(cors({
   origin: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://electro-khaki.vercel.app" // your frontend
+    "http://localhost:3000",                 // local dev
+    "https://electro-khaki.vercel.app"      // frontend deployed
   ]
 }));
 
@@ -23,17 +22,14 @@ let evData = [];
 // 🔹 Load CSV Data from GitHub
 async function loadCSV() {
   try {
-    // fetch raw CSV as text
     const response = await axios.get(CSV_URL, { responseType: "text" });
     const csvText = response.data;
 
-    // parse CSV
     const records = parse(csvText, {
       columns: true,
       skip_empty_lines: true
     });
 
-    // map to JSON
     evData = records.map((r, index) => ({
       id: index + 1,
       model: r["Model"] || "Unknown",

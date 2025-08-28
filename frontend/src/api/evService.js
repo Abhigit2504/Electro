@@ -1,18 +1,33 @@
 import axios from "axios";
 
-const API_URL = "https://electro-b.vercel.app/api";  // change if backend runs elsewhere
+const API_URL = "https://electro-b.vercel.app/api";  // deployed backend
 
 export const getEVs = async () => {
-  const res = await axios.get(`${API_URL}/evs/`);
-  return res.data;
+  try {
+    const res = await axios.get(`${API_URL}/evs`);
+    return res.data;
+  } catch (err) {
+    console.error("Failed to fetch EVs:", err.message);
+    return [];
+  }
 };
 
 export const getEVById = async (id) => {
-  const res = await axios.get(`${API_URL}/evs/${id}/`);
-  return res.data;
+  try {
+    const res = await axios.get(`${API_URL}/evs/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error("Failed to fetch EV by ID:", err.message);
+    return null;
+  }
 };
 
 export const getStats = async () => {
-  const res = await axios.get(`${API_URL}/stats/`);
-  return res.data;
+  try {
+    const res = await axios.get(`${API_URL}/stats`);
+    return res.data;
+  } catch (err) {
+    console.error("Failed to fetch stats:", err.message);
+    return {};
+  }
 };
